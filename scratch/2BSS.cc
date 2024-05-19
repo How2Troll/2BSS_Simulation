@@ -28,11 +28,18 @@
 #include "ns3/ipv4-address.h"
 #include <math.h>
 #include "ns3/log.h"
+//build
+#include "ns3/buildings-module.h"
+#include "ns3/oh-buildings-propagation-loss-model.h"
+
 
 using namespace ns3;
 using namespace std;
 
 NS_LOG_COMPONENT_DEFINE("WifiBSSSimulation");
+
+
+
 
 /* populate ARP tables */
 void PopulateARPcache()
@@ -136,7 +143,7 @@ int main(int argc, char *argv[])
     int nSTALegacy = 0;
     int nAP = 2;
     std::string offeredLoad = "100"; //Mbps per station
-    int simulationTime = 20;
+    int simulationTime = 5; //default 20
     int warmupTime = 5;
     bool BE = true;
     double r = 20;
@@ -150,7 +157,7 @@ int main(int argc, char *argv[])
     cmd.AddValue("interval", "Inter packet interval (s)", interval);
     cmd.AddValue("enableObssPd", "Enable/disable OBSS_PD", enableObssPd);
     cmd.AddValue("obssPdThreshold", "obssPdThreshold", obssPdThreshold);
-    cmd.AddValue("d3", "Distance between AP1 and AP2 (m)", d3);
+    cmd.AddValue("d3", "Distance between AP1 and AP2 (m)", d3); //most likely D1
     cmd.AddValue("d2", "Distance between AP and STA (m)", d2);
     cmd.AddValue("mcs", "The constant MCS value to transmit HE PPDUs", mcs);
     cmd.AddValue("mcsLegacy", "The constant MCS value to transmit HE PPDUs", mcsLegacy);
@@ -202,9 +209,16 @@ int main(int argc, char *argv[])
     YansWifiChannelHelper channelHelper = YansWifiChannelHelper::Default ();
     // std::string channelStr ("{0, " + std::to_string (20) + ", ");
     // channelStr += "BAND_5GHZ, 0}";
+    //spectrumChannel = channelHelper.Create ();
+    //spectrumChannel->SetPropagationLossModel (CreateObject<FriisPropagationLossModel>());
 
+    //change it for buildings
+    channelHelper.AddPropagationLoss("ns3::OhBuildingsPropagationLossModel");
+    channelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
     spectrumChannel = channelHelper.Create ();
-    spectrumChannel->SetPropagationLossModel (CreateObject<FriisPropagationLossModel>());
+
+    //ComponentEnable("OhBuildingsPropagationLossModel", LOG_LEVEL_ALL);
+
     spectrumPhy.SetChannel (spectrumChannel);
     spectrumPhy.SetPreambleDetectionModel ("ns3::ThresholdPreambleDetectionModel",
                                          "MinimumRssi", DoubleValue (minimumRssi));
@@ -337,20 +351,31 @@ int main(int argc, char *argv[])
     }
     MobilityHelper mobility;
     Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
-    positionAlloc->Add (Vector (0.0, 0.0, 0.0)); // AP1
+
+    
+    positionAlloc->Add (Vector (0.0, 0.0, 1.0)); // AP1
     for(int i=0; i<nSTA+nSTALegacy; i++){
-        positionAlloc->Add (Vector (0.0, -d2, 0.0)); // sta1
+        positionAlloc->Add (Vector (-d2, 0.0, 1.0)); // sta1
     }
-    // positionAlloc->Add (Vector (0.0, -d2, 0.0)); // sta1
-    // positionAlloc->Add (Vector (0.0, d2, 0.0)); // sta1
 
-    positionAlloc->Add (Vector (d3, 0.0, 0.0)); // AP2
+    positionAlloc->Add (Vector (d3, 0.0, 1.0)); // AP2
     for(int i=0; i<nSTA+nSTALegacy; i++){
-        positionAlloc->Add (Vector (d3, -d2, 0.0)); // sta2
+        positionAlloc->Add (Vector (d3+d2, 0.0, 1.0)); // sta2
     }
-    // positionAlloc->Add (Vector (d3, d2, 0.0)); // sta2
 
+    //BUILD THE WALL
 
+    Ptr<Building> building = CreateObject<Building> ();
+    double buildingWidth = 0.2; // Thickness of the wall
+    double buildingLength = 5.0; // Length of the wall
+    double buildingHeight = 3.0; // Height of the wall
+
+    building->SetBoundaries (Box (d3/2 - buildingWidth/2, d3/2 + buildingWidth/2, -buildingLength/2, buildingLength/2, 0.0, buildingHeight));
+    building->SetBuildingType (Building::Residential);
+    building->SetExtWallsType (Building::ConcreteWithWindows);
+    building->SetNFloors (1);
+    building->SetNRoomsX (1);
+    building->SetNRoomsY (1);
 
 
     mobility.SetPositionAllocator (positionAlloc);
@@ -359,7 +384,18 @@ int main(int argc, char *argv[])
         mobility.Install(wifiApNodes.Get(i));
         mobility.Install(wifiStaNodes[i]);
         mobility.Install(wifiStaNodesLegacy[i]);
+        
     }
+
+    for (int i = 0; i < nAP; ++i) {
+    BuildingsHelper::Install(wifiApNodes.Get(i));
+    BuildingsHelper::Install(wifiStaNodes[i]);
+    if (nSTALegacy > 0) 
+        {
+        BuildingsHelper::Install(wifiStaNodesLegacy[i]);
+        }
+    }
+
 /* umieszczenie stacji randomowo w obrebie okregu*/
     // mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator",
     //                             "X", DoubleValue(0.0),
