@@ -29,8 +29,8 @@
 #include <math.h>
 #include "ns3/log.h"
 //build
-#include "ns3/buildings-module.h"
-#include "ns3/oh-buildings-propagation-loss-model.h"
+//#include "ns3/buildings-module.h"
+//#include "ns3/oh-buildings-propagation-loss-model.h"
 
 
 using namespace ns3;
@@ -126,24 +126,24 @@ void installTrafficGenerator(Ptr<ns3::Node> fromNode, Ptr<ns3::Node> toNode, int
 int main(int argc, char *argv[])
 {
     NS_LOG_UNCOND("Starting the WiFi BSS Simulation");
-    double duration = 20.0;   // seconds
+    double duration = 20.0;   // seconds default 5
     double d3 = 140;        // meters
     double d2 = 2;
     double powSta = 15.0;    // dBm
     double powAp = 20.0;     // dBm
     double ccaEdTrSta = -62; // dBm Signal Detection is then -82dBm
     double ccaEdTrAp = -62;  // dBm
-    uint32_t mcs = 5;        // MCS value
+    uint32_t mcs = 11;        // MCS value
     uint32_t mcsLegacy = 5;        // MCS value
     double interval = 0.001; // seconds
-    bool enableObssPd = false;
-    double obssPdThreshold = -72.0; // dBm
+    bool enableObssPd = true;
+    double obssPdThreshold = -64.0; // dBm
     int packetSize = 1472;
     int nSTA =  1;
     int nSTALegacy = 0;
     int nAP = 2;
     std::string offeredLoad = "100"; //Mbps per station
-    int simulationTime = 5; //default 20
+    int simulationTime = 20.0; //default 20
     int warmupTime = 5;
     bool BE = true;
     double r = 20;
@@ -207,15 +207,15 @@ int main(int argc, char *argv[])
     YansWifiPhyHelper spectrumPhy;
     Ptr<YansWifiChannel> spectrumChannel;
     YansWifiChannelHelper channelHelper = YansWifiChannelHelper::Default ();
-    // std::string channelStr ("{0, " + std::to_string (20) + ", ");
-    // channelStr += "BAND_5GHZ, 0}";
-    //spectrumChannel = channelHelper.Create ();
-    //spectrumChannel->SetPropagationLossModel (CreateObject<FriisPropagationLossModel>());
+    //std::string channelStr ("{0, " + std::to_string (20) + ", ");
+    //channelStr += "BAND_5GHZ, 0}";
+    spectrumChannel = channelHelper.Create ();
+    spectrumChannel->SetPropagationLossModel (CreateObject<FriisPropagationLossModel>());
 
     //change it for buildings
-    channelHelper.AddPropagationLoss("ns3::OhBuildingsPropagationLossModel");
-    channelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-    spectrumChannel = channelHelper.Create ();
+    //channelHelper.AddPropagationLoss("ns3::OhBuildingsPropagationLossModel");
+    //channelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+    //spectrumChannel = channelHelper.Create ();
 
     //ComponentEnable("OhBuildingsPropagationLossModel", LOG_LEVEL_ALL);
 
@@ -363,21 +363,6 @@ int main(int argc, char *argv[])
         positionAlloc->Add (Vector (d3+d2, 0.0, 1.0)); // sta2
     }
 
-    //BUILD THE WALL
-
-    Ptr<Building> building = CreateObject<Building> ();
-    double buildingWidth = 0.2; // Thickness of the wall
-    double buildingLength = 5.0; // Length of the wall
-    double buildingHeight = 3.0; // Height of the wall
-
-    building->SetBoundaries (Box (d3/2 - buildingWidth/2, d3/2 + buildingWidth/2, -buildingLength/2, buildingLength/2, 0.0, buildingHeight));
-    building->SetBuildingType (Building::Residential);
-    building->SetExtWallsType (Building::ConcreteWithWindows);
-    building->SetNFloors (1);
-    building->SetNRoomsX (1);
-    building->SetNRoomsY (1);
-
-
     mobility.SetPositionAllocator (positionAlloc);
 
     for (int i = 0; i < nAP; i++){
@@ -387,14 +372,14 @@ int main(int argc, char *argv[])
         
     }
 
-    for (int i = 0; i < nAP; ++i) {
-    BuildingsHelper::Install(wifiApNodes.Get(i));
-    BuildingsHelper::Install(wifiStaNodes[i]);
-    if (nSTALegacy > 0) 
-        {
-        BuildingsHelper::Install(wifiStaNodesLegacy[i]);
-        }
-    }
+    // for (int i = 0; i < nAP; ++i) {
+    // BuildingsHelper::Install(wifiApNodes.Get(i));
+    // BuildingsHelper::Install(wifiStaNodes[i]);
+    // if (nSTALegacy > 0) 
+    //     {
+    //     BuildingsHelper::Install(wifiStaNodesLegacy[i]);
+    //     }
+    // }
 
 /* umieszczenie stacji randomowo w obrebie okregu*/
     // mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator",
