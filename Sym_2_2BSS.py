@@ -12,7 +12,7 @@ import scipy.stats as stats
 #("d2", "Distance between AP and STA
 
 #d3_distances = np.arange(40, 120, 10)  # [1, 201, 401]
-d2_distances = np.arange(40, 120, 10)
+d3_distances = np.arange(20, 300, 20)
 obss_pd_thresholds = [-64, -72, -78]  # dBm
 simulation_file = "scratch/2BSS"
 
@@ -26,13 +26,13 @@ for threshold in obss_pd_thresholds:
         'errors': []
     }
 
-    for d2 in d2_distances:
+    for d3 in d3_distances:
         throughputs = []
         for _ in range(num_runs):
             # Run simulation
             cmd = [
                 './ns3', 'run',
-                f"{simulation_file} --d2={d2} --obssPdThreshold={threshold}  --enableObssPd={True}"
+                f"{simulation_file} --d3={d3} --obssPdThreshold={threshold}  --enableObssPd={True}"
             ]#d2 only for tesst!
             print("Running simulation:", ' '.join(cmd))
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
@@ -59,14 +59,14 @@ for threshold in obss_pd_thresholds:
             results[threshold]['means'].append(None)
             results[threshold]['errors'].append(None)
 
-        print(f"Distance: {d2}m, Threshold: {threshold} dBm, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
+        print(f"Distance: {d3}m, Threshold: {threshold} dBm, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
 
 plt.figure(figsize=(10, 6))
 for thr, data in results.items():
     plt.errorbar(d3_distances, data['means'], yerr=data['errors'], fmt='o-', label=f'OBSS_PD threshold = {thr} dBm')
 
 plt.title('Throughput vs. Distance with Different OBSS_PD Thresholds and 95% CI')
-plt.xlabel('Distance D2 (m)')
+plt.xlabel('Distance D3 (m)')
 plt.ylabel('Throughput (Mbps)')
 plt.legend()
 plt.grid(True)

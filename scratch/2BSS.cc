@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     int nSTA =  1;
     int nSTALegacy = 0;
     int nAP = 2;
-    std::string offeredLoad = "100"; //Mbps per station
+    std::string offeredLoad = "300"; //Mbps per station
     int simulationTime = 20.0; //default 20
     int warmupTime = 5;
     bool BE = true;
