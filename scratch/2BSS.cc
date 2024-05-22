@@ -126,7 +126,7 @@ void installTrafficGenerator(Ptr<ns3::Node> fromNode, Ptr<ns3::Node> toNode, int
 int main(int argc, char *argv[])
 {
     NS_LOG_UNCOND("Starting the WiFi BSS Simulation");
-    double duration = 20.0;   // seconds default 5
+    double duration = 7.0;   // seconds default 5 //prev 20
     double d3 = 140;        // meters
     double d2 = 2;
     double powSta = 15.0;    // dBm
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     int nSTALegacy = 0;
     int nAP = 2;
     std::string offeredLoad = "300"; //Mbps per station
-    int simulationTime = 20.0; //default 20
+    int simulationTime = 7.0; //default 20 //prev 60
     int warmupTime = 5;
     bool BE = true;
     double r = 20;
