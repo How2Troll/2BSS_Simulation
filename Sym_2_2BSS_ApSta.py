@@ -8,23 +8,26 @@ import scipy.stats as stats
 
 
 # d2_distances = np.arange(40, 120, 10)  # AP <==> STA
-d3_distances = np.arange(20, 300, 120)  # AP1 <==> AP2
+d1_distances = np.arange(100, 380, 20)  # AP1 <==> AP2
 obss_pd_thresholds = [-64, -72, -78]  # dBm
 simulation_file = "scratch/2BSS"
 num_runs = 5
+
+rngRun=100
 
 results = []
 data_columns = ['Distance', 'Threshold', 'EnableObssPd', 'Mean Throughput (Mbps)', '95% Confidence Interval']
 
 # Iterate through the thresholds with enableObssPd = True
 for threshold in obss_pd_thresholds:
-    for d3 in d3_distances:
+    for d1 in d1_distances:
         throughputs = []
         for _ in range(num_runs):
+            rngRun+=1
             # Run simulation
             cmd = [
                 './ns3', 'run',
-                f"{simulation_file} --d3={d3} --obssPdThreshold={threshold} --enableObssPd=True"
+                f"{simulation_file} --d1={d1} --obssPdThreshold={threshold} --enableObssPd=True --rngRun={rngRun}"
             ]
             print("Running simulation:", ' '.join(cmd))
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
@@ -50,17 +53,18 @@ for threshold in obss_pd_thresholds:
             mean_throughput = None
             error_margin = None
 
-        results.append([d3, threshold, True, mean_throughput, error_margin])
-        print(f"Distance: {d3}m, Threshold: {threshold} dBm, enableObssPd: True, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
+        results.append([d1, threshold, True, mean_throughput, error_margin])
+        print(f"Distance: {d1}m, Threshold: {threshold} dBm, enableObssPd: True, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
 
 # Iterate once with enableObssPd = False
-for d3 in d3_distances:
+for d1 in d1_distances:
     throughputs = []
     for _ in range(num_runs):
+        rngRun+=1
         # Run simulation
         cmd = [
             './ns3', 'run',
-            f"{simulation_file} --d3={d3} --enableObssPd=False"
+            f"{simulation_file} --d1={d1} --enableObssPd=False"
         ]
         print("Running simulation:", ' '.join(cmd))
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
@@ -86,8 +90,8 @@ for d3 in d3_distances:
         mean_throughput = None
         error_margin = None
 
-    results.append([d3, 'N/A', False, mean_throughput, error_margin])
-    print(f"Distance: {d3}m, enableObssPd: False, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
+    results.append([d1, 'N/A', False, mean_throughput, error_margin])
+    print(f"Distance: {d1}m, enableObssPd: False, Throughput: {mean_throughput:.2f} +/- {error_margin:.2f} Mbps")
 
 # Create DataFrame and save as CSV
 results_df = pd.DataFrame(results, columns=data_columns)
@@ -103,10 +107,10 @@ for (thr, enable_obss_pd), group in results_df.groupby(['Threshold', 'EnableObss
     plt.errorbar(group['Distance'], group['Mean Throughput (Mbps)'], yerr=group['95% Confidence Interval'], fmt='o-', label=label)
 
 plt.title('Throughput vs. Distance with Different OBSS_PD Thresholds and 95% CI')
-plt.xlabel('Distance D3 (m)')
+plt.xlabel('Distance D1 (m)')
 plt.ylabel('Throughput (Mbps)')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig('throughput_vs_distance_with_CI_corrected.png')
+plt.savefig('throughput_vs_distance_d1.png')
 plt.show()

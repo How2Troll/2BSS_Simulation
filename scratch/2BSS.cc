@@ -28,9 +28,7 @@
 #include "ns3/ipv4-address.h"
 #include <math.h>
 #include "ns3/log.h"
-//build
-//#include "ns3/buildings-module.h"
-//#include "ns3/oh-buildings-propagation-loss-model.h"
+#include "ns3/rng-seed-manager.h"
 
 
 using namespace ns3;
@@ -126,9 +124,9 @@ void installTrafficGenerator(Ptr<ns3::Node> fromNode, Ptr<ns3::Node> toNode, int
 int main(int argc, char *argv[])
 {
     NS_LOG_UNCOND("Starting the WiFi BSS Simulation");
-    double duration = 7.0;   // seconds default 5 //prev 20
-    double d3 = 140;        // meters
-    double d2 = 2;
+    double duration = 60.0;   // seconds default 5 //prev 20
+    double d1 = 140;        // AP <==> STA
+    double d2 = 2; // AP1 <==> AP2
     double powSta = 15.0;    // dBm
     double powAp = 20.0;     // dBm
     double ccaEdTrSta = -62; // dBm Signal Detection is then -82dBm
@@ -143,12 +141,13 @@ int main(int argc, char *argv[])
     int nSTALegacy = 0;
     int nAP = 2;
     std::string offeredLoad = "300"; //Mbps per station
-    int simulationTime = 7.0; //default 20 //prev 60
+    int simulationTime = 60.0; //default 20 //prev 60
     int warmupTime = 5;
     bool BE = true;
     double r = 20;
     bool rtsCts = false;
     double minimumRssi = -82; // dBm
+    uint32_t rngRun = 1;
 
 
     CommandLine cmd(__FILE__);
@@ -157,7 +156,7 @@ int main(int argc, char *argv[])
     cmd.AddValue("interval", "Inter packet interval (s)", interval);
     cmd.AddValue("enableObssPd", "Enable/disable OBSS_PD", enableObssPd);
     cmd.AddValue("obssPdThreshold", "obssPdThreshold", obssPdThreshold);
-    cmd.AddValue("d3", "Distance between AP1 and AP2 (m)", d3); //most likely D1
+    cmd.AddValue("d1", "Distance between AP1 and AP2 (m)", d1); //most likely D1
     cmd.AddValue("d2", "Distance between AP and STA (m)", d2);
     cmd.AddValue("mcs", "The constant MCS value to transmit HE PPDUs", mcs);
     cmd.AddValue("mcsLegacy", "The constant MCS value to transmit HE PPDUs", mcsLegacy);
@@ -167,7 +166,10 @@ int main(int argc, char *argv[])
     cmd.AddValue("nSTA", "number of stations", nSTA);
     cmd.AddValue("nSTALegacy", "number of stations Legacy", nSTALegacy);
     cmd.AddValue("rtsCts", "enable/disable RTS CTS", rtsCts);
+    cmd.AddValue("rngRun", "Run number to set for RNG", rngRun);
     cmd.Parse(argc, argv);
+
+    RngSeedManager::SetRun(rngRun);
 
     NS_LOG_INFO("Creating node containers");
     NodeContainer wifiApNodes;
@@ -358,9 +360,9 @@ int main(int argc, char *argv[])
         positionAlloc->Add (Vector (-d2, 0.0, 1.0)); // sta1
     }
 
-    positionAlloc->Add (Vector (d3, 0.0, 1.0)); // AP2
+    positionAlloc->Add (Vector (d1, 0.0, 1.0)); // AP2
     for(int i=0; i<nSTA+nSTALegacy; i++){
-        positionAlloc->Add (Vector (d3+d2, 0.0, 1.0)); // sta2
+        positionAlloc->Add (Vector (d1+d2, 0.0, 1.0)); // sta2
     }
 
     mobility.SetPositionAllocator (positionAlloc);
@@ -391,7 +393,7 @@ int main(int argc, char *argv[])
 
 
     // mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator",
-    //                         "X", DoubleValue(d3),
+    //                         "X", DoubleValue(d1),
     //                         "Y", DoubleValue(0.0),
     //                         "rho", DoubleValue(d2));
     // mobility.Install(wifiStaNodes[1]);
@@ -410,7 +412,7 @@ int main(int argc, char *argv[])
     std::cout<< "CTS enabled: \t" << rtsCts << std::endl;
     std::cout<< "OBSS PD threshold: \t" << obssPdThreshold << std::endl;
     std::cout<< "Distance betwen AP and STA: \t" << d2 << std::endl;
-    std::cout<< "Distance between AP: \t" << d3 << std::endl;
+    std::cout<< "Distance between AP: \t" << d1 << std::endl;
     std::cout<< "MCS AX: \t" << mcs << std::endl;
     std::cout<< "MCS Legacy: \t" << mcsLegacy << std::endl;
     std::cout<< "stacje AX: \t" << nSTA << std::endl;
