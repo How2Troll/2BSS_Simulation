@@ -22,6 +22,7 @@ data_columns = ['Distance', 'Threshold', 'EnableObssPd', 'Mean Throughput (Mbps)
 for threshold in obss_pd_thresholds:
     for d1 in d1_distances:
         throughputs = []
+        rngRun=100
         for _ in range(num_runs):
             rngRun+=1
             # Run simulation
